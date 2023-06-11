@@ -16,7 +16,7 @@ export const FileUpload =  async (req:Request, res:Response) => {
     const jsonData: { any: any }[] = XLSX.utils.sheet_to_json(worksheet);
     // console.log(jsonData);
     res.status(200).send(jsonData);
-    // await Item.bulkCreate(jsonData);
+    await Item.bulkCreate(jsonData);
   } catch (error) {
     res.status(500).send({ message: "Error importing Excel data", error });
   }
