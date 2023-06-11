@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { InboxOutlined } from "@ant-design/icons";
-import TableComponent from "./tableComponent";
 import { Button, Table, Modal, Input, Upload } from "antd";
+
+
+const baseUrl = process.env.REACT_APP_BASE_URL;
 import {
   EditOutlined,
   DeleteOutlined,
@@ -25,7 +27,7 @@ const FileImportComponent: React.FC<Props> = () => {
   const [typeError, setTypeError] = useState<string | null>(null);
   const [items, setItems] = useState([]);
   useEffect(() => {
-    fetch("http://localhost:5000/api/data")
+    fetch(`${baseUrl}/api/data`)
       .then((res) => res.json())
       .then((data) => setItems(data));
   }, []);
@@ -62,7 +64,7 @@ const FileImportComponent: React.FC<Props> = () => {
     formData.append("fileName", file);
 
     try {
-      const response = await fetch("http://localhost:5000/upload", {
+      const response = await fetch("http://localhost:5000/api/upload", {
         method: "POST",
         body: formData,
       });

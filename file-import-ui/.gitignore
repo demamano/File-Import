@@ -33,3 +33,6 @@ yarn.lock
 *.iml
 *.log
 .DS_Stor
+.env
+file-import-ui/.env
+server/.env
