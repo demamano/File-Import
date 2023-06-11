@@ -1,64 +1,86 @@
-import React from 'react';
-// import type { FC } from 'react';
-import 'antd/dist/reset.css';
-// import './App.css';
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { InboxOutlined } from "@ant-design/icons";
+import TableComponent from "./tableComponent";
 import { Button, Table, Modal, Input, Upload } from "antd";
-import { EditOutlined, DeleteOutlined, UploadOutlined } from "@ant-design/icons";
-import "antd/dist/reset.css";
-import * as XLSX from 'xlsx'
-import axios from 'axios';
-interface Student {
+import {
+  EditOutlined,
+  DeleteOutlined,
+  UploadOutlined,
+} from "@ant-design/icons";
+
+interface Props {}
+
+interface Item {
   id: number;
-  name: string;
-  email: string;
-  address: string;
-  lame: string;
+  ItemNo: string;
+  Description: string;
+  Rate: string;
+  Qty: string;
+  Amount: string;
+  Unit: string;
 }
-type DataType = {
-  key: string;
-  itemNo: number;
-  description: string;
-  rate: number;
-  qty: number;
-  amount: number;
 
-};
-const App: React.FC = () => {
-  const [data, setData] = useState<DataType[]>([]);
+const FileImportComponent: React.FC<Props> = () => {
+  const [file, setFile] = useState<File | null>(null);
+  const [typeError, setTypeError] = useState<string | null>(null);
+  const [items, setItems] = useState([]);
+  useEffect(() => {
+    fetch("http://localhost:5000/api/data")
+      .then((res) => res.json())
+      .then((data) => setItems(data));
+  }, []);
+  // payments.map(payment=>(payment.))
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileTypes = [
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "text/csv",
+    ];
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      if (selectedFile && fileTypes.includes(selectedFile.type)) {
+        setTypeError(null);
+        setFile(selectedFile);
+      } else {
+        setTypeError("Please select only excel file types");
+        setFile(null);
+      }
+    } else {
+      console.log("Please select your file");
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!file) {
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("fileName", file);
+
+    try {
+      const response = await fetch("http://localhost:5000/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        alert("Data submitted successfully");
+      } else {
+        alert("Error submitting data");
+      }
+    } catch (error) {
+      alert(error);
+      // Handle error
+    }
+  };
+
+  
   const [isEditing, setIsEditing] = useState(false);
-  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
-
-  const [dataSource, setDataSource] = useState<Student[]>([
-    {
-      id: 1,
-      name: "John",
-      email: "john@gmail.com",
-      address: "John Address",
-      lame: "bora",
-    },
-    {
-      id: 2,
-      name: "David",
-      email: "david@gmail.com",
-      address: "David Address",
-      lame: "bora",
-    },
-    {
-      id: 3,
-      name: "James",
-      email: "james@gmail.com",
-      address: "James Address",
-      lame: "bora",
-    },
-    {
-      id: 4,
-      name: "Sam",
-      email: "sam@gmail.com",
-      address: "Sam Address",
-      lame: "bora",
-    },
-  ]);
+  const [editingItem, setEditingItem] = useState<Item | null>(null);
 
   const columns = [
     {
@@ -68,33 +90,49 @@ const App: React.FC = () => {
     },
     {
       key: "2",
-      title: "Name",
-      dataIndex: "name",
+      title: "ItemNo",
+      dataIndex: "ItemNo",
     },
     {
       key: "3",
-      title: "Email",
-      dataIndex: "email",
+      title: "Description",
+      dataIndex: "Description",
     },
     {
       key: "4",
-      title: "Address",
-      dataIndex: "address",
+      title: "Unit",
+      dataIndex: "Unit",
     },
     {
       key: "5",
+      title: "Qty",
+      dataIndex: "Qty",
+    },
+    {
+      key: "6",
+      title: "Rate",
+      dataIndex: "Rate",
+    },
+    {
+      key: "7",
+      title: "Amount",
+      dataIndex: "Amount",
+    },
+
+    {
+      key: "7",
       title: "Actions",
-      render: (record: Student) => {
+      render: (record: Item) => {
         return (
           <>
             <EditOutlined
               onClick={() => {
-                onEditStudent(record);
+                onEditItem(record);
               }}
             />
             <DeleteOutlined
               onClick={() => {
-                onDeleteStudent(record);
+                onDeleteItem(record);
               }}
               style={{ color: "red", marginLeft: 12 }}
             />
@@ -104,127 +142,71 @@ const App: React.FC = () => {
     },
   ];
 
-  const onAddStudent = () => {
-    const randomNumber: number = Math.floor(Math.random() * 100);
-    // const randomString: string = randomNumber.toString();
-    console.log(randomNumber);
-    randomNumber.toString();
-    const newStudent: Student = {
-      id: randomNumber,
-      name: "Name " + randomNumber,
-      email: randomNumber + "@gmail.com",
-      address: "Address " + randomNumber,
-      lame: "lame"
-    };
-    setDataSource((pre) => {
-      return [...pre, newStudent];
-    });
-  };
+  // const onAddItem = () => {
+  //   const randomNumber: number = Math.floor(Math.random() * 100);
+  //   // const randomString: string = randomNumber.toString();
+  //   console.log(randomNumber);
+  //   randomNumber.toString();
+  //   const newStudent: Item = {
+  //     id: randomNumber,
+  //     Description: "Name " + randomNumber,
+  //     Rate: randomNumber + "@gmail.com",
+  //     Amount: "Address " + randomNumber,
+  //     Qty: "lame",
+  //     Unit: "m3",
+  //     ItemNo: randomNumber.toString()
+  //   };
+  //   setDataSource((pre) => {
+  //     return [...pre, newStudent];
+  //   });
+  // };
 
-  const onDeleteStudent = (record: Student) => {
+  const onDeleteItem = (record: Item) => {
     Modal.confirm({
       title: "Are you sure, you want to delete this student record?",
       okText: "Yes",
       okType: "danger",
       onOk: () => {
-        setDataSource((pre) => {
-          return pre.filter((student) => student.id !== record.id);
+        setItems((pre) => {
+          return pre.filter((item: Item) => item.id !== record.id);
         });
       },
     });
   };
 
-  const onEditStudent = (record: Student) => {
+  const onEditItem = (record: Item) => {
     setIsEditing(true);
-    setEditingStudent({ ...record });
+    setEditingItem({ ...record });
   };
 
   const resetEditing = () => {
     setIsEditing(false);
-    setEditingStudent(null);
-  };
-  // 222
-
-  const [excelFile, setExcelFile] = useState<ArrayBuffer | null>(null);
-  const [excelFileError, setExcelFileError] = useState<string | null>(null);
-  const [excelData, setExcelData] = useState<Array<XLSX.ExcelDataType> | null>(null);
-  const [file, setFile] = useState<File | null>(null);
-
-  const fileType = ['application/vnd.ms-excel'];
-
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      if (selectedFile && fileType.includes(selectedFile.type)) {
-        const reader = new FileReader();
-        reader.readAsArrayBuffer(selectedFile);
-        reader.onload = (e) => {
-          setExcelFileError(null);
-          setExcelFile(e.target?.result as ArrayBuffer);
-        };
-      } else {
-        setExcelFileError('Please select only excel file types');
-        setExcelFile(null);
-      }
-    } else {
-      console.log('Please select your file');
-    }
+    setEditingItem(null);
   };
 
-  // const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-  //   e.preventDefault();
-  //   if (excelFile !== null) {
-  //     const workbook = XLSX.read(excelFile, { type: 'buffer' });
-  //     const worksheetName = workbook.SheetNames[0];
-  //     const worksheet = workbook.Sheets[worksheetName];
-  //     const data = XLSX.utils.sheet_to_json(worksheet) as Array<XLSX.ExcelDataType>;
-  //     setExcelData(data);
-  //   } else {
-  //     setExcelData(null);
-  //   }
-  // }
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (file) {
-      const formData = new FormData();
-      formData.append('excelFile', file);
-      try {
-        const response = await axios.post('/uploadExcel', formData);
-        postMessage(`Excel data stored with ID ${response.data.id}.`);
-      } catch (error) {
-        console.error(error);
-        postMessage('Failed to store Excel data.');
-      }
-    }
-  };
   return (
     <>
-      <div className='form'>
-        <form className='form-group' autoComplete="off"
-          onSubmit={handleSubmit}>
-          <label><h5>Upload Excel file</h5></label>
-          <br></br>
-          <input type='file' className='form-control'
-            onChange={handleFile} required></input>
-          {/* {excelFileError&&<div className='text-danger'
-          style={{marginTop:5+'px'}}>{excelFileError}</div>} */}
-          <button type='submit' className='btn btn-success'
-            style={{ marginTop: 5 + 'px' }}>Submit</button>
-        </form>
-      </div>
+      <h3>Upload & View Excel Sheets</h3>
+
+      <form className="form-group custom-form" onSubmit={handleSubmit}>
+        <input
+          type="file"
+          className="form-control"
+          required
+          onChange={handleFile}
+        />
+        <button type="submit" className="btn btn-success btn-md mt-2 ">
+          UPLOAD
+        </button>
+        {typeError && <div className="alert alert-danger">{typeError}</div>}
+      </form>
 
       <div className="container ">
-
-
-
-        <br></br>
-        <hr></hr>
-
+        <br></br> <hr></hr>
         {/* view file section */}
         <h5>View Excel file</h5>
-
-        <Button onClick={onAddStudent}>Add a new Student</Button>
-        <Table columns={columns} dataSource={dataSource}></Table>
+        {/* <Button onClick={onAddStudent}>Add a new Student</Button> */}
+        <Table columns={columns} dataSource={items}></Table>
         <Modal
           title="Edit Student"
           visible={isEditing}
@@ -233,12 +215,12 @@ const App: React.FC = () => {
             resetEditing();
           }}
           onOk={() => {
-            setDataSource((pre) => {
-              return pre.map((student) => {
-                if (student.id === editingStudent!.id) {
-                  return editingStudent!;
+            setItems((pre:any) => {
+              return pre.map((item:Item) => {
+                if (item.id === editingItem!.id) {
+                  return editingItem!;
                 } else {
-                  return student;
+                  return item;
                 }
               });
             });
@@ -246,35 +228,49 @@ const App: React.FC = () => {
           }}
         >
           <Input
-            value={editingStudent?.name}
+            value={editingItem?.ItemNo}
             onChange={(e) => {
-              setEditingStudent((pre) => {
+              setEditingItem((pre) => {
                 return { ...pre!, name: e.target.value };
               });
             }}
           />
           <Input
-            value={editingStudent?.email}
+            value={editingItem?.Description}
             onChange={(e) => {
-              setEditingStudent((pre) => {
+              setEditingItem((pre) => {
                 return { ...pre!, email: e.target.value };
               });
             }}
           />
           <Input
-            value={editingStudent?.address}
+            value={editingItem?.Rate}
             onChange={(e) => {
-              setEditingStudent((pre) => {
+              setEditingItem((pre) => {
+                return { ...pre!, address: e.target.value };
+              });
+            }}
+          />
+          <Input
+            value={editingItem?.Rate}
+            onChange={(e) => {
+              setEditingItem((pre) => {
+                return { ...pre!, address: e.target.value };
+              });
+            }}
+          />
+          <Input
+            value={editingItem?.Rate}
+            onChange={(e) => {
+              setEditingItem((pre) => {
                 return { ...pre!, address: e.target.value };
               });
             }}
           />
         </Modal>
-        {/* </div> */}
-
       </div>
     </>
   );
 };
 
-export default App;
+export default FileImportComponent;
